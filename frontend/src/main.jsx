@@ -305,7 +305,131 @@ function StaffPage({user,staff,rooms,appointments,refresh,notify}) {
   );
 }
 function AdminPage({staff,rooms,appointments,notify,refresh}){async function change(id,status){try{await call(`/api/appointments/${id}`,{method:'PATCH',body:JSON.stringify({status})});notify(`Request ${status.toLowerCase()}`);refresh()}catch(e){notify(e.message)}}return <><div className="stats"><Stat label="Faculty" value={staff.length}/><Stat label="Rooms" value={rooms.length}/><Stat label="Appointments" value={appointments.length}/><Stat label="Pending" value={appointments.filter(a=>a.status==='Pending').length}/></div><section className="panel"><h3>Appointment approvals</h3>{appointments.map(a=><div className="list-row"><b>{a.student_name}</b> · Staff #{a.staff_id} · {a.requested_date} {a.requested_time}<span>{a.purpose}</span><span className="actions">{a.status}{a.status==='Pending'&&<><button onClick={()=>change(a.id,'Approved')}>Approve</button><button onClick={()=>change(a.id,'Rejected')}>Reject</button></>}</span></div>)}</section><section className="panel"><h3>Faculty directory status</h3>{staff.map(s=><div className="list-row">{s.name} · {s.department}<span>{s.status} — {s.room?.room_number||'No room'}</span></div>)}</section></>}
-function ManagePage({rooms,refresh,notify}){const [staff,setStaff]=useState({name:'',department:'',designation:'',email:'',account_password:'',room_id:''});const [room,setRoom]=useState({building:'',floor:'',room_number:'',room_name:'',latitude:'',longitude:''});async function addStaff(e){e.preventDefault();try{await call('/api/admin/staff',{method:'POST',body:JSON.stringify({...staff,room_id:staff.room_id?Number(staff.room_id):null})});notify('Faculty and login created');setStaff({name:'',department:'',designation:'',email:'',account_password:'',room_id:''});refresh()}catch(e){notify(e.message)}}async function addRoom(e){e.preventDefault();try{await call('/api/admin/rooms',{method:'POST',body:JSON.stringify({...room,latitude:room.latitude?Number(room.latitude):null,longitude:room.longitude?Number(room.longitude):null})});notify('Room created');refresh()}catch(e){notify(e.message)}}return <div className="cols"><section className="panel"><h3>Create faculty account</h3><form className="stack" onSubmit={addStaff}>{['name','department','designation','email','account_password'].map(k=><input required type={k==='email'?'email':k==='account_password'?'password':'text'} placeholder={k.replace('_',' ')} value={staff[k]} onChange={e=>setStaff({...staff,[k]:e.target.value})}/>)}<select value={staff.room_id} onChange={e=>setStaff({...staff,room_id:e.target.value})}><option value="">No room assigned</option>{rooms.map(r=><option value={r.id}>{r.building} / {r.room_number}</option>)}</select><button className="primary">Create staff account</button></form></section><section className="panel"><h3>Add campus room</h3><form className="stack" onSubmit={addRoom}>{['building','floor','room_number','room_name','latitude','longitude'].map(k=><input placeholder={k.replace('_',' ')} value={room[k]} onChange={e=>setRoom({...room,[k]:e.target.value})}/>)}<button className="primary">Save room</button></form></section></div>}
+
+function ManagePage({ rooms, refresh, notify }) {
+  const [staff, setStaff] = useState({
+    name: '',
+    department: '',
+    designation: '',
+    email: '',
+    account_password: '',
+    room_id: ''
+  });
+
+  const [room, setRoom] = useState({
+    building: '',
+    floor: '',
+    room_number: '',
+    room_name: '',
+    latitude: '',
+    longitude: ''
+  });
+
+  // Remove duplicate rooms
+  const uniqueRooms = Array.from(
+    new Map(
+      rooms.map(r => [
+        `${r.building}-${r.room_number}`.trim().toLowerCase(),
+        r
+      ])
+    ).values()
+  );
+
+  async function addStaff(e) {
+    e.preventDefault();
+    try {
+      await call('/api/admin/staff', {
+        method: 'POST',
+        body: JSON.stringify({
+          ...staff,
+          room_id: staff.room_id ? Number(staff.room_id) : null
+        })
+      });
+
+      notify('Faculty and login created');
+      setStaff({
+        name: '',
+        department: '',
+        designation: '',
+        email: '',
+        account_password: '',
+        room_id: ''
+      });
+      refresh();
+    } catch (e) {
+      notify(e.message);
+    }
+  }
+
+  async function addRoom(e) {
+    e.preventDefault();
+    try {
+      await call('/api/admin/rooms', {
+        method: 'POST',
+        body: JSON.stringify({
+          ...room,
+          latitude: room.latitude ? Number(room.latitude) : null,
+          longitude: room.longitude ? Number(room.longitude) : null
+        })
+      });
+
+      notify('Room created');
+      refresh();
+    } catch (e) {
+      notify(e.message);
+    }
+  }
+
+  return (
+    <div className="cols">
+      <section className="panel">
+        <h3>Create faculty account</h3>
+        <form className="stack" onSubmit={addStaff}>
+          {['name', 'department', 'designation', 'email', 'account_password'].map(k => (
+            <input
+              key={k}
+              required
+              type={k === 'email' ? 'email' : k === 'account_password' ? 'password' : 'text'}
+              placeholder={k.replace('_', ' ')}
+              value={staff[k]}
+              onChange={e => setStaff({ ...staff, [k]: e.target.value })}
+            />
+          ))}
+
+          <select
+            value={staff.room_id}
+            onChange={e => setStaff({ ...staff, room_id: e.target.value })}
+          >
+            <option value="">No room assigned</option>
+            {uniqueRooms.map(r => (
+              <option key={r.id} value={r.id}>
+                {r.building} / {r.room_number}
+              </option>
+            ))}
+          </select>
+
+          <button className="primary">Create staff account</button>
+        </form>
+      </section>
+
+      <section className="panel">
+        <h3>Add campus room</h3>
+        <form className="stack" onSubmit={addRoom}>
+          {['building', 'floor', 'room_number', 'room_name', 'latitude', 'longitude'].map(k => (
+            <input
+              key={k}
+              placeholder={k.replace('_', ' ')}
+              value={room[k]}
+              onChange={e => setRoom({ ...room, [k]: e.target.value })}
+            />
+          ))}
+          <button className="primary">Save room</button>
+        </form>
+      </section>
+    </div>
+  );
+}
+
 function AppointmentsPage({user,appointments,staff,notify,refresh}) {
 
   async function updateAppointment(id,status) {
