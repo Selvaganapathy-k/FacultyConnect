@@ -1,7 +1,6 @@
 from datetime import datetime, date, time, timezone
 from typing import Optional
 from sqlmodel import SQLModel, Field
-from .database import create_db_and_tables, get_session, engine
 class User(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     full_name: str
