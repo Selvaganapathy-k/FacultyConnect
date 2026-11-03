@@ -144,8 +144,21 @@ async def delete_schedule(schedule_id:int,user:User=Depends(require_roles("staff
     return {"message":"Schedule deleted"}
 
 @app.get("/api/rooms")
-def rooms(session:Session=Depends(get_session)):
-    return session.exec(select(Room)).all()
+def rooms(session: Session = Depends(get_session)):
+    all_rooms = session.exec(select(Room)).all()
+
+    unique_rooms = {}
+
+    for room in all_rooms:
+        key = (
+            room.building.strip().lower(),
+            room.room_number.strip().lower()
+        )
+
+        if key not in unique_rooms:
+            unique_rooms[key] = room
+
+    return list(unique_rooms.values())
 
 @app.post("/api/admin/rooms")
 def create_room(payload:RoomInput,user:User=Depends(require_roles("admin")),session:Session=Depends(get_session)):
