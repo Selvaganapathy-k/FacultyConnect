@@ -187,9 +187,9 @@ It provides a centralized platform for faculty availability tracking, room navig
 
 ## 👨‍💻 Developer
 
-**Selvaganapathy K**
+**Kishore K**
 
-GitHub: [Selvaganapathy-k](https://github.com/Selvaganapathy-k)
+
 
 ---
 
